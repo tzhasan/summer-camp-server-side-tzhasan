@@ -73,6 +73,9 @@ async function run() {
     const usersCollection = client
       .db("summer-camp-project")
       .collection("usersCollection");
+    
+    // isAdmin verify for client
+    
 
     // Post user data from ragistration page
     app.post("/users", async (req, res) => {
@@ -93,10 +96,17 @@ async function run() {
     })
 
   // make Admin and instractors from admin dashboard
-    app.patch('/changeUserRole/:email', async (req, res) => {
-      const email = req.params.email;
-      const query = { email: email };
-      const user = await usersCollection.findOne(query)
+    app.patch('/changeUserRole/:id', async (req, res) => {
+      const id = req.params.id;
+      const {role} = req.body
+      const query = { _id: new ObjectId(id) };
+      const updateDoc = {
+        $set: {
+          role: role,
+        },
+      };
+      const result = await usersCollection.updateOne(query, updateDoc)
+      res.send(result);
     })
 
     // Send a ping to confirm a successful connection
