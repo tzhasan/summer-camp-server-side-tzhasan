@@ -75,7 +75,29 @@ async function run() {
       .collection("usersCollection");
     
     // isAdmin verify for client
-    
+    app.get("/users/admin/:email", async (req, res) => {
+      const query = { email: req.params.email };
+      console.log(query)
+      const user = await usersCollection.findOne(query);
+      const result = { admin: user?.role === "admin" };
+      res.send(result);
+    });
+    // isInstractor verify for client
+    app.get("/users/instractor/:email", async (req, res) => {
+      const query = { email: req.params.email };
+      console.log(query)
+      const user = await usersCollection.findOne(query);
+      const result = { instractor: user?.role === "instractor" };
+      res.send(result);
+    });
+    // isStudent verify for client
+    app.get("/users/student/:email", async (req, res) => {
+      const query = { email: req.params.email };
+      console.log(query)
+      const user = await usersCollection.findOne(query);
+      const result = { student: user?.role === "student" };
+      res.send(result);
+    });
 
     // Post user data from ragistration page
     app.post("/users", async (req, res) => {
