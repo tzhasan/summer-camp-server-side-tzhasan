@@ -19,7 +19,6 @@ app.use(cors(corsOptions));
 
 console.log(process.env.MONGO_USER);
 
-
 // mongoDB Function
 // mongoDB Function
 
@@ -73,11 +72,14 @@ async function run() {
     const usersCollection = client
       .db("summer-camp-project")
       .collection("usersCollection");
-    
+    const classCollection = client
+      .db("summer-camp-project")
+      .collection("classes");
+
     // isAdmin verify for client
     app.get("/users/admin/:email", async (req, res) => {
       const query = { email: req.params.email };
-      console.log(query)
+      console.log(query);
       const user = await usersCollection.findOne(query);
       const result = { admin: user?.role === "admin" };
       res.send(result);
@@ -85,7 +87,7 @@ async function run() {
     // isInstractor verify for client
     app.get("/users/instractor/:email", async (req, res) => {
       const query = { email: req.params.email };
-      console.log(query)
+      console.log(query);
       const user = await usersCollection.findOne(query);
       const result = { instractor: user?.role === "instractor" };
       res.send(result);
@@ -93,7 +95,6 @@ async function run() {
     // isStudent verify for client
     app.get("/users/student/:email", async (req, res) => {
       const query = { email: req.params.email };
-      console.log(query)
       const user = await usersCollection.findOne(query);
       const result = { student: user?.role === "student" };
       res.send(result);
@@ -111,25 +112,45 @@ async function run() {
       const result = await usersCollection.insertOne(data);
       res.send(result);
     });
+
     // get user list from admin dashboard
-    app.get('/usersFromAdmin/users', async (req, res) => {
+    app.get("/usersFromAdmin/users", async (req, res) => {
       const result = await usersCollection.find().toArray();
       res.send(result);
-    })
+    });
 
-  // make Admin and instractors from admin dashboard
-    app.patch('/changeUserRole/:id', async (req, res) => {
+    // get Class list from admin dashboard
+    app.get("/classesFromAdmin/classes", async (req, res) => {
+      const result = await classCollection.find().toArray();
+      res.send(result);
+    });
+
+    // make Admin and instractors from admin dashboard
+    app.patch("/changeUserRole/:id", async (req, res) => {
       const id = req.params.id;
-      const {role} = req.body
+      const { role } = req.body;
       const query = { _id: new ObjectId(id) };
       const updateDoc = {
         $set: {
           role: role,
         },
       };
-      const result = await usersCollection.updateOne(query, updateDoc)
+      const result = await usersCollection.updateOne(query, updateDoc);
       res.send(result);
-    })
+    });
+
+    // add classes by instructor
+    app.use("/instructor/addaclass", async (req, res) => {
+      const { newData } = req.body;
+      const existingClass = await classCollection.findOne({
+        coursename: newData.coursename,
+      });
+      if (existingClass) {
+        return res.status(400).send({ error: "Class already exists" });
+      }
+      const result = await classCollection.insertOne(newData);
+      res.send(result);
+    });
 
     // Send a ping to confirm a successful connection
     await client.db("admin").command({ ping: 1 });
@@ -142,12 +163,6 @@ run().catch(console.dir);
 
 // mongoDB Function
 // mongoDB Function
-
-
-
-
-
-
 
 app.get("/", (req, res) => {
   res.send("server running!");
