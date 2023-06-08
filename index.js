@@ -17,7 +17,6 @@ const corsOptions = {
 app.use(express.json());
 app.use(cors(corsOptions));
 
-console.log(process.env.MONGO_USER);
 
 // mongoDB Function
 // mongoDB Function
@@ -79,7 +78,6 @@ async function run() {
     // isAdmin verify for client
     app.get("/users/admin/:email", async (req, res) => {
       const query = { email: req.params.email };
-      console.log(query);
       const user = await usersCollection.findOne(query);
       const result = { admin: user?.role === "admin" };
       res.send(result);
@@ -87,7 +85,6 @@ async function run() {
     // isInstractor verify for client
     app.get("/users/instractor/:email", async (req, res) => {
       const query = { email: req.params.email };
-      console.log(query);
       const user = await usersCollection.findOne(query);
       const result = { instractor: user?.role === "instractor" };
       res.send(result);
@@ -125,6 +122,40 @@ async function run() {
       res.send(result);
     });
 
+    // get Myclasses data from instructor dashboard
+    app.get('/myclasses/:email', async (req, res) => { 
+      const email = req.params.email
+      const query = { email: email }
+      const result = await classCollection.find(query).toArray();
+      res.send(result);
+    }) 
+
+    // Update pending class request from admin manage classes
+    app.patch("/updatestatus/:id", async (req, res) => {
+      const id = req.params.id;
+      const { status } = req.body;
+      const query = { _id: new ObjectId(id) };
+      const updateDoc = {
+        $set: {
+          status: status,
+        },
+      };
+      const result = await classCollection.updateOne(query, updateDoc);
+      res.send(result);
+    });
+    // Update pending class request from admin manage classes
+    app.patch("/addfeedback/admin/:id", async (req, res) => {
+      const id = req.params.id;
+      const { feedbackValue } = req.body;
+      const query = { _id: new ObjectId(id) };
+      const updateDoc = {
+        $set: {
+          feedback: feedbackValue,
+        },
+      };
+      const result = await classCollection.updateOne(query, updateDoc);
+      res.send(result);
+    });
     // make Admin and instractors from admin dashboard
     app.patch("/changeUserRole/:id", async (req, res) => {
       const id = req.params.id;
