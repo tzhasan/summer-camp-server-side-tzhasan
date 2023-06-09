@@ -2,9 +2,12 @@ const express = require("express");
 const cors = require("cors");
 const jwt = require("jsonwebtoken");
 
+
 require("dotenv").config();
 const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
 require("dotenv").config();
+// console.log(process.env.PAYMENT_SECRET_KEY);
+const stripe = require("stripe")(process.env.PAYMENT_SECRET_KEY);
 
 const app = express();
 const port = process.env.PORT || 5000;
@@ -140,15 +143,24 @@ async function run() {
       res.send(result);
     });
 
+    // get populer classes based on students number
+    app.get('/popularClass', async (req, res) => { 
+      const popularClasses = await classCollection
+        .aggregate([
+          { $sort: { enrolled: -1 } }, // Sort by enrolled number in descending order
+          { $limit: 6 }, // Get the top 5 classes with the highest enrollment
+        ])
+        .toArray();
+      res.send(popularClasses)
+    })
+
     // get students selected classes
     app.get('/selectedClasses/:email', async (req, res) => { 
       const email = req.params.email
-      console.log(email)
       const query = {
         studentEmail: email,
       };
       const result = await cartCollection.find(query).toArray()
-      console.log(result)
       res.send(result);
     })
 
@@ -157,7 +169,6 @@ async function run() {
       const id = req.params.id
       query = { courseId: id };
       const result = await cartCollection.deleteOne(query)
-      console.log(result)
       res.send(result);
     });
 
@@ -216,15 +227,28 @@ async function run() {
 
     // add classes on cart by students
     app.post('/addtocart', async (req, res) => { 
-      // const email = req.params.email;
       const course = req.body;
-      console.log(course)
-      // course.enrolledStudent = email;
-      // course.enrolleStatus = '';
-      // delete course._id;
       const result = await cartCollection.insertOne(course);
       res.send(result);
     })
+
+    // create payment intent
+    app.post("/create-payment-intent", async (req, res) => {
+      const { price } = req.body;
+      const amount = price * 100
+
+      // Create a PaymentIntent with the order amount and currency
+      const paymentIntent = await stripe.paymentIntents.create({
+        amount: amount,
+        currency: "aed",
+        payment_method_types:['card']
+      });
+
+      res.send({
+        clientSecret: paymentIntent.client_secret,
+      });
+    });
+    
 
     // Send a ping to confirm a successful connection
     await client.db("admin").command({ ping: 1 });
