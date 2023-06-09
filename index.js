@@ -74,6 +74,9 @@ async function run() {
     const classCollection = client
       .db("summer-camp-project")
       .collection("classes");
+    const cartCollection = client
+      .db("summer-camp-project")
+      .collection("StudentCarts");
 
     // isAdmin verify for client
     app.get("/users/admin/:email", async (req, res) => {
@@ -130,6 +133,34 @@ async function run() {
       res.send(result);
     }) 
 
+    // get all classes for Classes page
+    app.get("/allclasses/classesPage", async (req, res) => {
+      const filter = { status: "Approved" }
+      const result = await classCollection.find(filter).toArray();
+      res.send(result);
+    });
+
+    // get students selected classes
+    app.get('/selectedClasses/:email', async (req, res) => { 
+      const email = req.params.email
+      console.log(email)
+      const query = {
+        studentEmail: email,
+      };
+      const result = await cartCollection.find(query).toArray()
+      console.log(result)
+      res.send(result);
+    })
+
+    // Delete classes from student cart
+    app.delete("/deleteClassForStudent/:id", async (req, res) => {
+      const id = req.params.id
+      query = { courseId: id };
+      const result = await cartCollection.deleteOne(query)
+      console.log(result)
+      res.send(result);
+    });
+
     // Update pending class request from admin manage classes
     app.patch("/updatestatus/:id", async (req, res) => {
       const id = req.params.id;
@@ -171,7 +202,7 @@ async function run() {
     });
 
     // add classes by instructor
-    app.use("/instructor/addaclass", async (req, res) => {
+    app.post("/instructor/addaclass", async (req, res) => {
       const { newData } = req.body;
       const existingClass = await classCollection.findOne({
         coursename: newData.coursename,
@@ -182,6 +213,18 @@ async function run() {
       const result = await classCollection.insertOne(newData);
       res.send(result);
     });
+
+    // add classes on cart by students
+    app.post('/addtocart', async (req, res) => { 
+      // const email = req.params.email;
+      const course = req.body;
+      console.log(course)
+      // course.enrolledStudent = email;
+      // course.enrolleStatus = '';
+      // delete course._id;
+      const result = await cartCollection.insertOne(course);
+      res.send(result);
+    })
 
     // Send a ping to confirm a successful connection
     await client.db("admin").command({ ping: 1 });
