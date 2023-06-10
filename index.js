@@ -309,6 +309,19 @@ async function run() {
       const update = { $inc: { enrolled: 1, availableSeats: -1 } };
       const updateResult = await classCollection.updateOne(filter, update);
 
+      // to delete from cartCollection
+      const courseIdFilter = { courseId: courseId }
+      const deleteClassCart = await cartCollection.deleteOne(courseIdFilter)
+
+      res.send(result);
+    });
+
+    // get Payment histry
+    app.get("/paymentHistry/:email", async (req, res) => {
+      const email = req.params.email;
+      const query = { email: email };
+
+      const result = await paymentCollection.find(query).sort({ created: -1 }).toArray()
       res.send(result);
     });
 
