@@ -2,7 +2,6 @@ const express = require("express");
 const cors = require("cors");
 const jwt = require("jsonwebtoken");
 
-
 require("dotenv").config();
 const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
 require("dotenv").config();
@@ -19,7 +18,6 @@ const corsOptions = {
 // middleware
 app.use(express.json());
 app.use(cors(corsOptions));
-
 
 // mongoDB Function
 // mongoDB Function
@@ -80,6 +78,9 @@ async function run() {
     const cartCollection = client
       .db("summer-camp-project")
       .collection("StudentCarts");
+    const paymentCollection = client
+      .db("summer-camp-project")
+      .collection("PaymentCollection");
 
     // isAdmin verify for client
     app.get("/users/admin/:email", async (req, res) => {
@@ -129,46 +130,66 @@ async function run() {
     });
 
     // get Myclasses data from instructor dashboard
-    app.get('/myclasses/:email', async (req, res) => { 
-      const email = req.params.email
-      const query = { email: email }
+    app.get("/myclasses/:email", async (req, res) => {
+      const email = req.params.email;
+      const query = { email: email };
       const result = await classCollection.find(query).toArray();
       res.send(result);
-    }) 
+    });
 
     // get all classes for Classes page
     app.get("/allclasses/classesPage", async (req, res) => {
-      const filter = { status: "Approved" }
+      const filter = { status: "Approved" };
       const result = await classCollection.find(filter).toArray();
       res.send(result);
     });
 
     // get populer classes based on students number
-    app.get('/popularClass', async (req, res) => { 
+    app.get("/popularClass", async (req, res) => {
       const popularClasses = await classCollection
         .aggregate([
           { $sort: { enrolled: -1 } }, // Sort by enrolled number in descending order
           { $limit: 6 }, // Get the top 5 classes with the highest enrollment
         ])
         .toArray();
-      res.send(popularClasses)
-    })
+      res.send(popularClasses);
+    });
+
+    // get top 6 populer Instrutor for home page
+    app.get("/popularInstructors", async (req, res) => {
+      const instructorList = await classCollection
+        .aggregate([
+          {
+            $group: {
+              _id: "$email",
+              totalEnrolled: { $sum: "$enrolled" },
+            },
+          },
+          {
+            $sort: { totalEnrolled: -1 },
+          },
+          {
+            $limit: 6,
+          },
+        ])
+        .toArray();
+    });
 
     // get students selected classes
-    app.get('/selectedClasses/:email', async (req, res) => { 
-      const email = req.params.email
+    app.get("/selectedClasses/:email", async (req, res) => {
+      const email = req.params.email;
       const query = {
         studentEmail: email,
       };
-      const result = await cartCollection.find(query).toArray()
+      const result = await cartCollection.find(query).toArray();
       res.send(result);
-    })
+    });
 
     // Delete classes from student cart
     app.delete("/deleteClassForStudent/:id", async (req, res) => {
-      const id = req.params.id
+      const id = req.params.id;
       query = { courseId: id };
-      const result = await cartCollection.deleteOne(query)
+      const result = await cartCollection.deleteOne(query);
       res.send(result);
     });
 
@@ -226,29 +247,49 @@ async function run() {
     });
 
     // add classes on cart by students
-    app.post('/addtocart', async (req, res) => { 
+    app.post("/addtocart", async (req, res) => {
       const course = req.body;
       const result = await cartCollection.insertOne(course);
       res.send(result);
-    })
+    });
 
     // create payment intent
     app.post("/create-payment-intent", async (req, res) => {
       const { price } = req.body;
-      const amount = price * 100
-
+      const amount = price * 100;
       // Create a PaymentIntent with the order amount and currency
       const paymentIntent = await stripe.paymentIntents.create({
         amount: amount,
         currency: "aed",
-        payment_method_types:['card']
+        payment_method_types: ["card"],
       });
 
       res.send({
         clientSecret: paymentIntent.client_secret,
       });
     });
-    
+
+    // get single class for paymentInfo
+    app.get("/getclassInfo/:id", async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: new ObjectId(id) };
+      const result = await cartCollection.findOne(query);
+      res.send(result);
+    });
+
+    // store payment informations
+    app.post("/PaymentInfo", async (req, res) => {
+      const paymentInfo = req.body;
+      const result = await paymentCollection.insertOne(paymentInfo);
+
+      // Update enrolled status in cartCollection
+      const courseId = paymentInfo.courseId;
+      const filter = { courseId: courseId };
+      const update = { $set: { enrolled: true } };
+      const updateResult = await cartCollection.updateMany(filter, update);
+
+      res.send(result);
+    });
 
     // Send a ping to confirm a successful connection
     await client.db("admin").command({ ping: 1 });
