@@ -162,6 +162,9 @@ async function run() {
           {
             $group: {
               _id: "$email",
+              instructorname: { $first: "$instructorname" },
+              instructorImg: { $first: "$instructorImg" },
+              enrolled: { $sum: "$enrolled" },
               totalEnrolled: { $sum: "$enrolled" },
             },
           },
@@ -173,6 +176,7 @@ async function run() {
           },
         ])
         .toArray();
+      res.send(instructorList);
     });
 
     // get students selected classes
