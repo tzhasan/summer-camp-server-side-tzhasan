@@ -189,6 +189,14 @@ async function run() {
       res.send(result);
     });
 
+    // get enrolled classes of students by email
+    app.get('/enrolledClass/:email', async (req, res) => { 
+      const email = req.params.email;
+      const filter = { email: email }
+      const result = await paymentCollection.find(filter).toArray();
+      res.send(result);
+    })
+
     // Delete classes from student cart
     app.delete("/deleteClassForStudent/:id", async (req, res) => {
       const id = req.params.id;
@@ -303,6 +311,15 @@ async function run() {
 
       res.send(result);
     });
+
+    // get all instructor for instructor route
+    app.get('/allInstructors', async (req, res) => {
+      const query = { role: "instractor" };
+      const instructors = await usersCollection
+        .find(query)
+        .toArray();
+      res.send(instructors);
+    })
 
     // Send a ping to confirm a successful connection
     await client.db("admin").command({ ping: 1 });
