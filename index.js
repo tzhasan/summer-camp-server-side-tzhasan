@@ -284,9 +284,18 @@ async function run() {
 
       // Update enrolled status in cartCollection
       const courseId = paymentInfo.courseId;
-      const filter = { courseId: courseId };
-      const update = { $set: { enrolled: true } };
-      const updateResult = await cartCollection.updateMany(filter, update);
+      const enrollefilter = { courseId: courseId };
+      const enrolleupdate = { $set: { enrolled: true } };
+      const enrolleupdateResult = await cartCollection.updateMany(
+        enrollefilter,
+        enrolleupdate
+      );
+
+      // Update enrolled and availableSeats in classCollection
+      const coursename = paymentInfo.courseName;
+      const filter = { coursename: coursename };
+      const update = { $inc: { enrolled: 1, availableSeats: -1 } };
+      const updateResult = await classCollection.updateOne(filter, update);
 
       res.send(result);
     });
