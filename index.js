@@ -118,24 +118,50 @@ async function run() {
     });
 
     // get user list from admin dashboard
-    app.get("/usersFromAdmin/users", async (req, res) => {
+    app.get("/usersFromAdmin/users",verifyJwt, async (req, res) => {
       const result = await usersCollection.find().toArray();
       res.send(result);
     });
 
     // get Class list from admin dashboard
-    app.get("/classesFromAdmin/classes", async (req, res) => {
+    app.get("/classesFromAdmin/classes",verifyJwt, async (req, res) => {
       const result = await classCollection.find().toArray();
       res.send(result);
     });
 
     // get Myclasses data from instructor dashboard
-    app.get("/myclasses/:email", async (req, res) => {
+    app.get("/myclasses/:email",verifyJwt, async (req, res) => {
       const email = req.params.email;
       const query = { email: email };
       const result = await classCollection.find(query).toArray();
       res.send(result);
     });
+
+    // get data for update class page from instructor dashboard
+    app.get('/classes/update/:id', verifyJwt, async (req, res) => { 
+      const id = req.params.id;
+      const query = { _id: new ObjectId(id) };
+      const result = await classCollection.findOne(query)
+      res.send(result);
+    })
+
+    // patch for update class data from instructor dashboard
+    app.patch('/classes/updateData/:id', verifyJwt, async (req, res) => {
+      const newData  = req.body
+      const id = req.params.id;
+      const query = { _id: new ObjectId(id) };
+      const update = {
+        $set: {
+          coursename: newData.coursename,
+          price: newData.price,
+          totalseats: newData.totalseats,
+          imgurl: newData.imgurl,
+        },
+      };
+      const result = await classCollection.updateOne(query, update);
+      console.log(result)
+      res.send(result);
+    })
 
     // get all classes for Classes page
     app.get("/allclasses/classesPage", async (req, res) => {
@@ -180,7 +206,7 @@ async function run() {
     });
 
     // get students selected classes
-    app.get("/selectedClasses/:email", async (req, res) => {
+    app.get("/selectedClasses/:email",verifyJwt, async (req, res) => {
       const email = req.params.email;
       const query = {
         studentEmail: email,
@@ -190,7 +216,7 @@ async function run() {
     });
 
     // get enrolled classes of students by email
-    app.get('/enrolledClass/:email', async (req, res) => { 
+    app.get('/enrolledClass/:email',verifyJwt, async (req, res) => { 
       const email = req.params.email;
       const filter = { email: email }
       const result = await paymentCollection.find(filter).toArray();
@@ -198,7 +224,7 @@ async function run() {
     })
 
     // Delete classes from student cart
-    app.delete("/deleteClassForStudent/:id", async (req, res) => {
+    app.delete("/deleteClassForStudent/:id",verifyJwt, async (req, res) => {
       const id = req.params.id;
       query = { courseId: id };
       const result = await cartCollection.deleteOne(query);
