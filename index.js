@@ -232,7 +232,7 @@ async function run() {
     });
 
     // Update pending class request from admin manage classes
-    app.patch("/updatestatus/:id", async (req, res) => {
+    app.patch("/updatestatus/:id", verifyJwt, async (req, res) => {
       const id = req.params.id;
       const { status } = req.body;
       const query = { _id: new ObjectId(id) };
@@ -245,7 +245,7 @@ async function run() {
       res.send(result);
     });
     // Update pending class request from admin manage classes
-    app.patch("/addfeedback/admin/:id", async (req, res) => {
+    app.patch("/addfeedback/admin/:id", verifyJwt, async (req, res) => {
       const id = req.params.id;
       const { feedbackValue } = req.body;
       const query = { _id: new ObjectId(id) };
@@ -258,7 +258,7 @@ async function run() {
       res.send(result);
     });
     // make Admin and instractors from admin dashboard
-    app.patch("/changeUserRole/:id", async (req, res) => {
+    app.patch("/changeUserRole/:id", verifyJwt, async (req, res) => {
       const id = req.params.id;
       const { role } = req.body;
       const query = { _id: new ObjectId(id) };
@@ -272,7 +272,7 @@ async function run() {
     });
 
     // add classes by instructor
-    app.post("/instructor/addaclass", async (req, res) => {
+    app.post("/instructor/addaclass", verifyJwt, async (req, res) => {
       const { newData } = req.body;
       const existingClass = await classCollection.findOne({
         coursename: newData.coursename,
@@ -285,14 +285,14 @@ async function run() {
     });
 
     // add classes on cart by students
-    app.post("/addtocart", async (req, res) => {
+    app.post("/addtocart", verifyJwt, async (req, res) => {
       const course = req.body;
       const result = await cartCollection.insertOne(course);
       res.send(result);
     });
 
     // create payment intent
-    app.post("/create-payment-intent", async (req, res) => {
+    app.post("/create-payment-intent", verifyJwt, async (req, res) => {
       const { price } = req.body;
       const amount = price * 100;
       // Create a PaymentIntent with the order amount and currency
@@ -308,7 +308,7 @@ async function run() {
     });
 
     // get single class for paymentInfo
-    app.get("/getclassInfo/:id", async (req, res) => {
+    app.get("/getclassInfo/:id", verifyJwt, async (req, res) => {
       const id = req.params.id;
       const query = { _id: new ObjectId(id) };
       const result = await cartCollection.findOne(query);
@@ -343,7 +343,7 @@ async function run() {
     });
 
     // get Payment histry
-    app.get("/paymentHistry/:email", async (req, res) => {
+    app.get("/paymentHistry/:email", verifyJwt, async (req, res) => {
       const email = req.params.email;
       const query = { email: email };
 
@@ -355,7 +355,7 @@ async function run() {
     });
 
     // get all instructor for instructor route
-    app.get("/allInstructors", async (req, res) => {
+    app.get("/allInstructors", verifyJwt, async (req, res) => {
       const query = { role: "instractor" };
       const instructors = await usersCollection.find(query).toArray();
       res.send(instructors);
