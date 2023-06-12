@@ -118,19 +118,19 @@ async function run() {
     });
 
     // get user list from admin dashboard
-    app.get("/usersFromAdmin/users",verifyJwt, async (req, res) => {
+    app.get("/usersFromAdmin/users", verifyJwt, async (req, res) => {
       const result = await usersCollection.find().toArray();
       res.send(result);
     });
 
     // get Class list from admin dashboard
-    app.get("/classesFromAdmin/classes",verifyJwt, async (req, res) => {
+    app.get("/classesFromAdmin/classes", verifyJwt, async (req, res) => {
       const result = await classCollection.find().toArray();
       res.send(result);
     });
 
     // get Myclasses data from instructor dashboard
-    app.get("/myclasses/:email",verifyJwt, async (req, res) => {
+    app.get("/myclasses/:email", verifyJwt, async (req, res) => {
       const email = req.params.email;
       const query = { email: email };
       const result = await classCollection.find(query).toArray();
@@ -138,16 +138,16 @@ async function run() {
     });
 
     // get data for update class page from instructor dashboard
-    app.get('/classes/update/:id', verifyJwt, async (req, res) => { 
+    app.get("/classes/update/:id", verifyJwt, async (req, res) => {
       const id = req.params.id;
       const query = { _id: new ObjectId(id) };
-      const result = await classCollection.findOne(query)
+      const result = await classCollection.findOne(query);
       res.send(result);
-    })
+    });
 
     // patch for update class data from instructor dashboard
-    app.patch('/classes/updateData/:id', verifyJwt, async (req, res) => {
-      const newData  = req.body
+    app.patch("/classes/updateData/:id", verifyJwt, async (req, res) => {
+      const newData = req.body;
       const id = req.params.id;
       const query = { _id: new ObjectId(id) };
       const update = {
@@ -159,9 +159,9 @@ async function run() {
         },
       };
       const result = await classCollection.updateOne(query, update);
-      console.log(result)
+      console.log(result);
       res.send(result);
-    })
+    });
 
     // get all classes for Classes page
     app.get("/allclasses/classesPage", async (req, res) => {
@@ -206,7 +206,7 @@ async function run() {
     });
 
     // get students selected classes
-    app.get("/selectedClasses/:email",verifyJwt, async (req, res) => {
+    app.get("/selectedClasses/:email", verifyJwt, async (req, res) => {
       const email = req.params.email;
       const query = {
         studentEmail: email,
@@ -216,15 +216,15 @@ async function run() {
     });
 
     // get enrolled classes of students by email
-    app.get('/enrolledClass/:email',verifyJwt, async (req, res) => { 
+    app.get("/enrolledClass/:email", verifyJwt, async (req, res) => {
       const email = req.params.email;
-      const filter = { email: email }
+      const filter = { email: email };
       const result = await paymentCollection.find(filter).toArray();
       res.send(result);
-    })
+    });
 
     // Delete classes from student cart
-    app.delete("/deleteClassForStudent/:id",verifyJwt, async (req, res) => {
+    app.delete("/deleteClassForStudent/:id", verifyJwt, async (req, res) => {
       const id = req.params.id;
       query = { courseId: id };
       const result = await cartCollection.deleteOne(query);
@@ -336,8 +336,8 @@ async function run() {
       const updateResult = await classCollection.updateOne(filter, update);
 
       // to delete from cartCollection
-      const courseIdFilter = { courseId: courseId }
-      const deleteClassCart = await cartCollection.deleteOne(courseIdFilter)
+      const courseIdFilter = { courseId: courseId };
+      const deleteClassCart = await cartCollection.deleteOne(courseIdFilter);
 
       res.send(result);
     });
@@ -347,18 +347,19 @@ async function run() {
       const email = req.params.email;
       const query = { email: email };
 
-      const result = await paymentCollection.find(query).sort({ created: -1 }).toArray()
+      const result = await paymentCollection
+        .find(query)
+        .sort({ created: -1 })
+        .toArray();
       res.send(result);
     });
 
     // get all instructor for instructor route
-    app.get('/allInstructors', async (req, res) => {
+    app.get("/allInstructors", async (req, res) => {
       const query = { role: "instractor" };
-      const instructors = await usersCollection
-        .find(query)
-        .toArray();
+      const instructors = await usersCollection.find(query).toArray();
       res.send(instructors);
-    })
+    });
 
     // Send a ping to confirm a successful connection
     await client.db("admin").command({ ping: 1 });
